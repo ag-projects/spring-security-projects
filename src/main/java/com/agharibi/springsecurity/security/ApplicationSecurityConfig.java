@@ -1,18 +1,16 @@
 package com.agharibi.springsecurity.security;
 
+import com.agharibi.springsecurity.auth.ApplicationUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +23,12 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    private final ApplicationUserService applicationUserService;
+
+    public ApplicationSecurityConfig(ApplicationUserService applicationUserService) {
+        this.applicationUserService = applicationUserService;
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -54,29 +58,16 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
+    public DaoAuthenticationProvider daoAuthenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setPasswordEncoder(passwordEncoder);
+        provider.setUserDetailsService(applicationUserService);
+
+        return provider;
+    }
+
     @Override
-    protected UserDetailsService userDetailsService() {
-        UserDetails anna = User.builder()
-            .username("anna")
-            .password(passwordEncoder.encode("anna"))
-            //.roles(STUDENT.name()) // ROLE_STUDENT
-            .authorities(STUDENT.getGrantedAuthorities())
-            .build();
-
-        UserDetails linda = User.builder()
-            .username("linda")
-            .password(passwordEncoder.encode("linda"))
-            //.roles(ADMIN.name())   // ROLE_ADMIN
-            .authorities(ADMIN.getGrantedAuthorities())
-            .build();
-
-        UserDetails tom = User.builder()
-            .username("tom")
-            .password(passwordEncoder.encode("tom"))
-            //.roles(ADMIN_TRAINEE.name())  // ROLE_ADMIN_TRAINEE
-            .authorities(ADMIN_TRAINEE.getGrantedAuthorities())
-            .build();
-
-        return new InMemoryUserDetailsManager(anna, linda, tom);
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(daoAuthenticationProvider());
     }
 }
