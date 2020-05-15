@@ -42,7 +42,15 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
             .defaultSuccessUrl("/courses", true)
             .and()
             .rememberMe().tokenValiditySeconds((int) TimeUnit.DAYS.toSeconds(21))
-            .key("somethingVerySecured");
+            .key("somethingVerySecured")
+            .and()
+            .logout()
+                .logoutUrl("/logout")
+                .clearAuthentication(true)
+                .invalidateHttpSession(true)
+                .deleteCookies("XSRF-TOKEN", "JSESSIONID")
+                .logoutSuccessUrl("/login");
+
     }
 
     @Bean
