@@ -1,6 +1,7 @@
 package com.agharibi.springsecurity.security;
 
 import com.agharibi.springsecurity.auth.ApplicationUserService;
+import com.agharibi.springsecurity.jwt.JwtTokenVerifier;
 import com.agharibi.springsecurity.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +39,7 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
             .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager()))
+            .addFilterAfter(new JwtTokenVerifier(), JwtUsernameAndPasswordAuthenticationFilter.class)
             .authorizeRequests()
 
             .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
