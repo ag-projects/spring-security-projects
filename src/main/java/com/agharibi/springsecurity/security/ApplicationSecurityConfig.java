@@ -1,6 +1,7 @@
 package com.agharibi.springsecurity.security;
 
 import com.agharibi.springsecurity.auth.ApplicationUserService;
+import com.agharibi.springsecurity.jwt.JwtConfig;
 import com.agharibi.springsecurity.jwt.JwtTokenVerifier;
 import com.agharibi.springsecurity.jwt.JwtUsernameAndPasswordAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,8 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import javax.crypto.SecretKey;
+
 import static com.agharibi.springsecurity.security.ApplicationUserRole.STUDENT;
 
 @Configuration
@@ -26,9 +29,15 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
     private PasswordEncoder passwordEncoder;
 
     private final ApplicationUserService applicationUserService;
+    private final SecretKey secretKey;
+    private final JwtConfig jwtConfig;
 
-    public ApplicationSecurityConfig(ApplicationUserService applicationUserService) {
+    public ApplicationSecurityConfig(ApplicationUserService applicationUserService,
+                                     SecretKey secretKey, JwtConfig jwtConfig) {
+
         this.applicationUserService = applicationUserService;
+        this.secretKey = secretKey;
+        this.jwtConfig = jwtConfig;
     }
 
     @Override
@@ -38,8 +47,8 @@ public class ApplicationSecurityConfig extends WebSecurityConfigurerAdapter {
             .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             .and()
-            .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager()))
-            .addFilterAfter(new JwtTokenVerifier(), JwtUsernameAndPasswordAuthenticationFilter.class)
+            .addFilter(new JwtUsernameAndPasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
+            .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig), JwtUsernameAndPasswordAuthenticationFilter.class)
             .authorizeRequests()
 
             .antMatchers("/", "index", "/css/*", "/js/*").permitAll()
